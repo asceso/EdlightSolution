@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Общие сведения об этой сборке предоставляются следующим набором
 // набора атрибутов. Измените значения этих атрибутов для изменения сведений,
 // связанные со сборкой.
-[assembly: AssemblyTitle("DatabaseServices")]
+[assembly: AssemblyTitle("ApplicationModels")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DatabaseServices")]
+[assembly: AssemblyProduct("ApplicationModels")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("22637495-8d5d-40d6-8f7b-c616f6d0ddb6")]
+[assembly: Guid("3bc9c9c3-3ee8-476b-afee-6c113a9d5650")]
 
 // Сведения о версии сборки состоят из указанных ниже четырех значений:
 //

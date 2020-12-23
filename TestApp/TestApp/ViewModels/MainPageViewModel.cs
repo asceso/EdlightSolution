@@ -1,62 +1,76 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Net;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using DatabaseServices;
+using ApplicationModels;
+using Newtonsoft.Json;
+using Prism.Commands;
+using Prism.Mvvm;
+using TestApp.Views;
 using Xamarin.Forms;
 
 namespace TestApp.ViewModels
 {
-    public class MainPageViewModel : INotifyPropertyChanged
+    public class MainPageViewModel : BindableBase
     {
-        string title = string.Empty;
-        public string Title
+        private UserModel model;
+        public UserModel Model
         {
-            get { return title; }
-            set { SetProperty(ref title, value); }
+            get => model ??= new();
+            set => SetProperty(ref model, value);
         }
 
-        public ICommand SomeCommand { get; }
-
+        public ICommand AuthCommand { get; }
         public MainPageViewModel()
         {
-            Title = "Some text";
-            SomeCommand = new Command(OnSomeCommand);
+#if DEBUG
+            Model.Login = "admin";
+            Model.Password = "admin";
+#endif
+
+            AuthCommand = new DelegateCommand(OnSomeCommand);
         }
 
-        private async void OnSomeCommand(object obj)
+        private async void OnSomeCommand()
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri("http://87.117.58.158:4884/api/users/");
-            //var model = await UsersService.GetUserByLogin("admin");
-            //Title = $"{model.ID}, {model.Login} {model.Password}";
+            try
+            {
+                HttpClient client = new();
+                client.Timeout = TimeSpan.FromSeconds(5);
+                HttpRequestMessage request = new();
+                request.RequestUri = new Uri($"http://192.168.0.11:5000/api/users/login={Model.Login}&auth_token=5B6253853ACCF8B8E4FEE1F67C46D");
+                request.Method = HttpMethod.Get;
+                request.Headers.Add("Accept", "application/json");
+
+                HttpResponseMessage response = await client.SendAsync(request);
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    await Application.Current.MainPage.DisplayAlert("Ошибка", response.Content.ReadAsStringAsync().Result, "Ок");
+                    return;
+                }
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    await Application.Current.MainPage.DisplayAlert("Ошибка", response.Content.ReadAsStringAsync().Result, "Ок");
+                    return;
+                }
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    HttpContent responseContent = response.Content;
+                    var json = await responseContent.ReadAsStringAsync();
+                    UserModel user = JsonConvert.DeserializeObject<UserModel>(json);
+                    if (user.Password != Model.Password)
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Ошибка", "Пароль не подходит", "Ок");
+                        return;
+                    }
+                    await Application.Current.MainPage.Navigation.PushModalAsync(new TabbedPage1());
+                }
+            }
+            catch (Exception ex)
+            {
+                await Application.Current.MainPage.DisplayAlert("Ошибка", ex.Message, "Ок");
+            }
         }
-
-        protected bool SetProperty<T>(ref T backingStore, T value,
-            [CallerMemberName] string propertyName = "",
-            Action onChanged = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(backingStore, value))
-                return false;
-
-            backingStore = value;
-            onChanged?.Invoke();
-            OnPropertyChanged(propertyName);
-            return true;
-        }
-
-        #region INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            var changed = PropertyChanged;
-            if (changed == null)
-                return;
-
-            changed.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-        #endregion
     }
 }
